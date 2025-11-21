@@ -84,7 +84,7 @@ export default function App() {
 function Header() {
   return (
     <header className="header">
-      <h1>⭐ To-Do App</h1>
+      <h1>⭐ To-Do App ELias</h1>
     </header>
   );
 }
