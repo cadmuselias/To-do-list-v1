@@ -84,7 +84,7 @@ export default function App() {
 function Header() {
   return (
     <header className="header">
-      <h1>⭐ To-Do App ELias</h1>
+      <h1>⭐ To-Do App</h1>
     </header>
   );
 }
@@ -106,7 +106,8 @@ function AddTask({ onAddTask }) {
   const [userInput, setUserInput] = useState("");
   const inEl = useRef(null);
 
-  function hanldeNewTask() {
+  function hanldeNewTask(e) {
+    e.preventDefault();
     if (!userInput.trim()) return;
 
     const newTask = {
@@ -126,23 +127,18 @@ function AddTask({ onAddTask }) {
       ) {
         if (document.activeElement === inEl.current) return;
         inEl.current.focus();
-      } else if (
-        inEl.current.value &&
-        e.code.toLowerCase() === "Enter".toLowerCase()
-      ) {
-        hanldeNewTask();
       }
     }
 
     document.addEventListener("keydown", callback);
 
     return () => document.removeEventListener("keydown", callback);
-  }, [userInput]);
+  }, []);
 
   return (
     <section className="add-task-container">
       <h3>Add a new task</h3>
-      <div className="add-task-form">
+      <form className="add-task-form" onSubmit={hanldeNewTask}>
         <input
           ref={inEl}
           type="text"
@@ -150,8 +146,8 @@ function AddTask({ onAddTask }) {
           onChange={(e) => setUserInput(e.target.value)}
           placeholder="What do you want to do today?"
         />
-        <button onClick={hanldeNewTask}>+</button>
-      </div>
+        <button type="submit">+</button>
+      </form>
     </section>
   );
 }
