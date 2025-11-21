@@ -22,12 +22,25 @@ const tasksSample = [
 export default function App() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
 
+  // const filterTasks = tasks.filter((task) => {
+  //   if (filter === "Active") return task.completed === false;
+  //   if (filter === "Completed") return task.completed === true;
+
+  //   return true;
+  // });
+
+  // Combine filter and search
   const filterTasks = tasks.filter((task) => {
-    if (filter === "Active") return task.completed === false;
-    if (filter === "Completed") return task.completed === true;
+    const matchesSearch = task.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
 
-    return true;
+    if (filter === "Active") return !task.completed && matchesSearch;
+    if (filter === "Completed") return task.completed && matchesSearch;
+
+    return matchesSearch;
   });
 
   function handleDeleteClear() {
@@ -60,7 +73,7 @@ export default function App() {
   return (
     <main className="app-container">
       <Header />
-      <Search />
+      <Search search={search} setSearch={setSearch} />
       <AddTask onAddTask={handleAddTask} />
       <Filter setFilter={setFilter} />
       <Tasks
@@ -83,8 +96,7 @@ function Header() {
   );
 }
 
-function Search() {
-  const [search, setSearch] = useState("");
+function Search({ search, setSearch }) {
   return (
     <div className="search-container">
       <input
