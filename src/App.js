@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 
-const tasks = [
+const tasksSample = [
   {
     id: "1",
     title: "Buy groceries",
@@ -20,13 +20,57 @@ const tasks = [
 ];
 
 export default function App() {
+  const [tasks, setTasks] = useState([]);
+  const [filter, setFilter] = useState("All");
+
+  const filterTasks = tasks.filter((task) => {
+    if (filter === "Active") return task.completed === false;
+    if (filter === "Completed") return task.completed === true;
+
+    return true;
+  });
+
+  function handleDeleteClear() {
+    setTasks(tasks.filter((task) => !task.completed));
+  }
+
+  function handleDeleteTask(id) {
+    setTasks(tasks.filter((task) => task.id !== id));
+  }
+  function handleAddTask(task) {
+    setTasks((tasks) => [...tasks, task]);
+  }
+
+  function handleCompleteToggle(id) {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  }
+
+  function handleUpdateTask(id, newTitle) {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, title: newTitle } : task
+      )
+    );
+  }
+
   return (
     <main className="app-container">
       <Header />
       <Search />
-      <AddTask />
-      <Filter />
-      <Tasks />
+      <AddTask onAddTask={handleAddTask} />
+      <Filter setFilter={setFilter} />
+      <Tasks
+        tasks={tasks}
+        onCompleteToggle={handleCompleteToggle}
+        onUpdateTask={handleUpdateTask}
+        onDeletetask={handleDeleteTask}
+        filterTasks={filterTasks}
+      />
+      <Footer onDeleteClear={handleDeleteClear} tasks={tasks} />
     </main>
   );
 }
@@ -53,57 +97,150 @@ function Search() {
   );
 }
 
-function AddTask() {
-  const [addTask, setAddTask] = useState("");
+function AddTask({ onAddTask }) {
+  const [userInput, setUserInput] = useState("");
+  const inEl = useRef(null);
+
+  function hanldeNewTask() {
+    if (!userInput.trim()) return;
+
+    const newTask = {
+      id: crypto.randomUUID(),
+      title: userInput,
+      completed: false,
+    };
+    onAddTask(newTask);
+    setUserInput("");
+  }
+
+  useEffect(() => {
+    function callback(e) {
+      if (
+        !inEl.current.value &&
+        e.code.toLowerCase() === "Enter".toLowerCase()
+      ) {
+        if (document.activeElement === inEl.current) return;
+        inEl.current.focus();
+      } else if (
+        inEl.current.value &&
+        e.code.toLowerCase() === "Enter".toLowerCase()
+      ) {
+        hanldeNewTask();
+      }
+    }
+
+    document.addEventListener("keydown", callback);
+
+    return () => document.removeEventListener("keydown", callback);
+  }, [userInput]);
+
   return (
     <section className="add-task-container">
       <h3>Add a new task</h3>
       <div className="add-task-form">
         <input
+          ref={inEl}
           type="text"
-          value={addTask}
-          onChange={(e) => setAddTask(e.target.value)}
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
           placeholder="What do you want to do today?"
         />
-        <button>+</button>
+        <button onClick={hanldeNewTask}>+</button>
       </div>
     </section>
   );
 }
 
-function Filter() {
-  const [filter, setFilter] = useState("");
+function Filter({ setFilter }) {
   return (
-    <section className="filter-container">
-      <select onChange={(e) => setFilter(e.target.value)} value={filter}>
+    <section
+      className="filter-container"
+      onClick={(e) => setFilter(e.target.value)}
+    >
+      <select onChange={(e) => setFilter(e.target.value)}>
         <option value="All">All</option>
         <option value="Active">Active</option>
-        <option value="Completed ">Completed </option>
+        <option value="Completed">Completed </option>
       </select>
     </section>
   );
 }
 
-function Tasks() {
+function Tasks({ filterTasks, onCompleteToggle, onUpdateTask, onDeletetask }) {
   return (
     <ul className="task-list">
-      {tasks.map((task) => (
-        <TaskItems task={task} key={task.id} />
+      {filterTasks.map((filterTask) => (
+        <TaskItems
+          task={filterTask}
+          key={filterTask.id}
+          onCompleteToggle={onCompleteToggle}
+          onUpdateTask={onUpdateTask}
+          onDeletetask={onDeletetask}
+        />
       ))}
     </ul>
   );
 }
 
-function TaskItems({ task }) {
+function TaskItems({ task, onCompleteToggle, onUpdateTask, onDeletetask }) {
+  const [isEditing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(task.title);
+
+  function handleSave() {
+    if (editText.trim()) {
+      onUpdateTask(task.id, editText);
+    }
+    setEditing(false);
+  }
+
+  if (!isEditing) {
+    return (
+      <li className={`task-item ${task.completed ? "completed" : ""}`}>
+        <div className="task-details">
+          <input
+            type="checkbox"
+            checked={task.completed}
+            onChange={() => onCompleteToggle(task.id)}
+          />
+          <p>{task.title}</p>
+        </div>
+        <div className="task-actions">
+          <button onClick={() => setEditing(true)}>✏ Edit</button>
+          <button onClick={() => onDeletetask(task.id)}>❌ Delete</button>
+        </div>
+      </li>
+    );
+  }
+
   return (
     <li className="task-item">
-      <div className="task-details">
-        <input type="checkbox" /> <p>{task.title}</p>
-      </div>
+      <input
+        className="edit-input"
+        type="text"
+        value={editText}
+        onChange={(e) => setEditText(e.target.value)}
+      />{" "}
       <div className="task-actions">
-        <button>✏ Edit</button>
-        <button>❌ Delete</button>
+        <button className="save-btn" onClick={handleSave}>
+          Save
+        </button>
+        <button className="cancel-btn" onClick={() => setEditing(false)}>
+          Cancel
+        </button>
       </div>
     </li>
+  );
+}
+
+function Footer({ onDeleteClear, tasks }) {
+  const taskLeft = tasks.filter((task) => !task.completed).length;
+
+  return (
+    <footer className="footer">
+      <button className="clear-completed-btn" onClick={onDeleteClear}>
+        Clear completed
+      </button>
+      <p className="tasks-left">Tasks left: {taskLeft}</p>
+    </footer>
   );
 }
