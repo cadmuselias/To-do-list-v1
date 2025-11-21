@@ -24,13 +24,6 @@ export default function App() {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
 
-  // const filterTasks = tasks.filter((task) => {
-  //   if (filter === "Active") return task.completed === false;
-  //   if (filter === "Completed") return task.completed === true;
-
-  //   return true;
-  // });
-
   // Combine filter and search
   const filterTasks = tasks.filter((task) => {
     const matchesSearch = task.title
@@ -75,7 +68,7 @@ export default function App() {
       <Header />
       <Search search={search} setSearch={setSearch} />
       <AddTask onAddTask={handleAddTask} />
-      <Filter setFilter={setFilter} />
+      <Filter filter={filter} setFilter={setFilter} />
       <Tasks
         tasks={tasks}
         onCompleteToggle={handleCompleteToggle}
@@ -163,17 +156,19 @@ function AddTask({ onAddTask }) {
   );
 }
 
-function Filter({ setFilter }) {
+function Filter({ filter, setFilter }) {
+  const filters = ["All", "Active", "Completed"];
   return (
-    <section
-      className="filter-container"
-      onClick={(e) => setFilter(e.target.value)}
-    >
-      <select onChange={(e) => setFilter(e.target.value)}>
-        <option value="All">All</option>
-        <option value="Active">Active</option>
-        <option value="Completed">Completed </option>
-      </select>
+    <section className="filter-container">
+      {filters.map((f) => (
+        <button
+          key={f}
+          className={`filter-btn ${filter === f ? "active" : ""}`}
+          onClick={() => setFilter(f)}
+        >
+          {f}
+        </button>
+      ))}
     </section>
   );
 }
