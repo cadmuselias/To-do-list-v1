@@ -189,6 +189,15 @@ function TaskItems({ task, onCompleteToggle, onUpdateTask, onDeletetask }) {
   const [isEditing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.title);
 
+  function handleDelete() {
+    const listItem = document.getElementById(task.id);
+    if (listItem) {
+      listItem.classList.add("removing");
+      // Wait for the animation to finish before removing the task
+      setTimeout(() => onDeletetask(task.id), 300);
+    }
+  }
+
   function handleSave() {
     if (editText.trim()) {
       onUpdateTask(task.id, editText);
@@ -198,7 +207,10 @@ function TaskItems({ task, onCompleteToggle, onUpdateTask, onDeletetask }) {
 
   if (!isEditing) {
     return (
-      <li className={`task-item ${task.completed ? "completed" : ""}`}>
+      <li
+        id={task.id}
+        className={`task-item ${task.completed ? "completed" : ""}`}
+      >
         <div className="task-details">
           <input
             type="checkbox"
@@ -209,14 +221,17 @@ function TaskItems({ task, onCompleteToggle, onUpdateTask, onDeletetask }) {
         </div>
         <div className="task-actions">
           <button onClick={() => setEditing(true)}>✏ Edit</button>
-          <button onClick={() => onDeletetask(task.id)}>❌ Delete</button>
+          <button onClick={handleDelete}>❌ Delete</button>
         </div>
       </li>
     );
   }
 
   return (
-    <li className="task-item">
+    <li
+      id={task.id}
+      className={`task-item ${task.completed ? "completed" : ""}`}
+    >
       <input
         className="edit-input"
         type="text"
